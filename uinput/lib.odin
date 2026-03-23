@@ -28,7 +28,10 @@ make_device :: proc(usetup: Setup, device_init: Device_Init) -> (dev: linux.Fd, 
 
 	init_inputs(dev, .KEY, .KEYBIT, device_init.keys)
 	init_inputs(dev, .REL, .RELBIT, device_init.rel)
+
+	linux.ioctl(dev, u32(UI_SET.EVBIT), uintptr(EV.ABS))
 	for &abs in device_init.abs {
+		linux.ioctl(dev, u32(UI_SET.ABSBIT), uintptr(abs.code))
 		linux.ioctl(dev, 0x401c5504, uintptr(&abs)) // UI_ABS_SETUP
 	}
 

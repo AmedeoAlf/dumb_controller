@@ -13,68 +13,6 @@ dbg :: proc(val: $T) -> T {
 	return val
 }
 
-Input_Event :: struct {
-	time:       linux.Time_Val,
-	type, code: u16,
-	value:      i32,
-}
-
-Input_Id :: struct {
-	bustype, vendor, product, version: u16,
-}
-
-UINPUT_MAX_NAME_SIZE :: 80
-
-iow :: proc "contextless" ($num: u32, $type: typeid) -> u32 {
-	return (1 << 30) | ('U' << 8) | (num << 0) | (size_of(type) << 16)
-}
-
-IOW_INT_TOP_BITS :: (1 << 30) | ('U' << 8) | (size_of(i32) << 16)
-IOW_PTR_TOP_BITS :: (1 << 30) | ('U' << 8) | (size_of(rawptr) << 16)
-
-UI_SET :: enum u32 {
-	EVBIT   = IOW_INT_TOP_BITS | 100,
-	KEYBIT  = IOW_INT_TOP_BITS | 101,
-	RELBIT  = IOW_INT_TOP_BITS | 102,
-	ABSBIT  = IOW_INT_TOP_BITS | 103,
-	MSCBIT  = IOW_INT_TOP_BITS | 104,
-	LEDBIT  = IOW_INT_TOP_BITS | 105,
-	SNDBIT  = IOW_INT_TOP_BITS | 106,
-	FFBIT   = IOW_INT_TOP_BITS | 107,
-	PHYS    = IOW_PTR_TOP_BITS | 108,
-	SWBIT   = IOW_INT_TOP_BITS | 109,
-	PROPBIT = IOW_INT_TOP_BITS | 110,
-}
-
-EV :: enum uintptr {
-	SYN = 0x00,
-	KEY = 0x01,
-	REL = 0x02,
-	ABS = 0x03,
-	MSC = 0x04,
-	SW = 0x05,
-	LED = 0x11,
-	SND = 0x12,
-	REP = 0x14,
-	FF = 0x15,
-	PWR = 0x16,
-	FF_STATUS = 0x17,
-	MAX = 0x1f,
-	CNT,
-}
-
-Setup :: struct {
-	input_id:       Input_Id,
-	name:           [UINPUT_MAX_NAME_SIZE]byte,
-	ff_effects_max: u32,
-}
-
-Device_Init :: struct {
-	keys: []KEY,
-	rel:  []REL,
-	abs:  []ABS,
-}
-
 // from https://docs.kernel.org/input/uinput.html
 make_device :: proc(usetup: Setup, device_init: Device_Init) -> (dev: linux.Fd, err: linux.Errno) {
 	usetup := usetup
@@ -90,7 +28,9 @@ make_device :: proc(usetup: Setup, device_init: Device_Init) -> (dev: linux.Fd, 
 
 	init_inputs(dev, .KEY, .KEYBIT, device_init.keys)
 	init_inputs(dev, .REL, .RELBIT, device_init.rel)
-	init_inputs(dev, .ABS, .ABSBIT, device_init.abs)
+	for &abs in device_init.abs {
+		linux.ioctl(dev, 0x401c5504, uintptr(&abs)) // UI_ABS_SETUP
+	}
 
 	linux.ioctl(dev, 0x405c5503, uintptr(&usetup)) // UI_DEV_SETUP
 	linux.ioctl(dev, 0x5501, 0) // UI_DEV_CREATE
@@ -103,7 +43,7 @@ make_device :: proc(usetup: Setup, device_init: Device_Init) -> (dev: linux.Fd, 
 }
 
 destroy_device :: proc(dev: linux.Fd) {
-	linux.ioctl(dev, 'u', 2) // UI_DEV_DESTROY
+	linux.ioctl(dev, 0x5502, 2) // UI_DEV_DESTROY
 	linux.close(dev)
 }
 

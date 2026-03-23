@@ -92,8 +92,8 @@ make_device :: proc(usetup: Setup, device_init: Device_Init) -> (dev: linux.Fd, 
 	init_inputs(dev, .REL, .RELBIT, device_init.rel)
 	init_inputs(dev, .ABS, .ABSBIT, device_init.abs)
 
-	linux.ioctl(dev, 3, uintptr(&usetup)) // UI_DEV_SETUP
-	linux.ioctl(dev, 'u', 1) // UI_DEV_CREATE
+	linux.ioctl(dev, 0x405c5503, uintptr(&usetup)) // UI_DEV_SETUP
+	linux.ioctl(dev, 0x5501, 0) // UI_DEV_CREATE
 
 	req := linux.Time_Spec {
 		time_sec = 1,

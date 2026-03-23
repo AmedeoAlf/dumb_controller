@@ -4,7 +4,7 @@ import "core:fmt"
 import "core:mem"
 import "core:sys/linux"
 
-DEBUG :: false
+DEBUG :: true
 
 dbg :: proc(val: $T) -> T {
 	when DEBUG {
@@ -52,7 +52,11 @@ destroy_device :: proc(dev: linux.Fd) {
 
 
 emit_raw :: proc(dev: linux.Fd, #any_int type, code: u16, val: i32) {
-	linux.write(dev, mem.any_to_bytes(Input_Event{type = type, code = code, value = val}))
+	_, errno := linux.write(
+		dev,
+		mem.any_to_bytes(Input_Event{type = type, code = code, value = val}),
+	)
+	if errno != .NONE do dbg(errno)
 }
 
 emit_key :: proc(dev: linux.Fd, key: KEY, pressed: b32) {

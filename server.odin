@@ -51,7 +51,6 @@ _uinput_key_from_btn :: proc(btn: Button) -> uinput.KEY {
 filter_btns :: proc(state: ^Gamepad_State) {
 	nums := transmute(Buttons_Underlying)state.buttons
 	nums &= Buttons_Underlying((1 << len(Button)) - 1)
-	fmt.println(transmute(Buttons_Underlying)state.buttons, nums)
 	state.buttons = transmute(bit_set[Button;Buttons_Underlying])nums
 }
 

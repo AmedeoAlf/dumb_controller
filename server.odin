@@ -61,6 +61,7 @@ handle_diff :: proc(player: ^Player, state: ^Gamepad_State) {
 		key := _uinput_key_from_btn(btn)
 		if key != nil do uinput.emit(player.device, key, btn in state.buttons)
 	}
+	uinput.report_0(player.device)
 }
 
 handle_input :: proc(packet: ^Input_Packet, endpoint: ^net.Endpoint) {

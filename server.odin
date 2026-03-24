@@ -54,11 +54,16 @@ filter_btns :: proc(state: ^Gamepad_State) {
 	state.buttons = transmute(bit_set[Button;Buttons_Underlying])nums
 }
 
+buttons_to_le :: proc(buttons: bit_set[Button;u16be]) -> bit_set[Button;u16] {
+	return transmute(bit_set[Button;u16])u16(transmute(u16be)buttons)
+}
+
 handle_diff :: proc(player: ^Player, state: ^Gamepad_State) {
 	// Some weird ass bug makes it need to be treaded as little endian to work
-	changed := transmute(bit_set[Button;u16le])(player.state.buttons ~ state.buttons)
+	changed := buttons_to_le(player.state.buttons ~ state.buttons)
 	for btn in changed {
 		key := _uinput_key_from_btn(btn)
+		fmt.println(key, "has changed", transmute(u64)key)
 		if key != nil do uinput.emit(player.device, key, btn in state.buttons)
 	}
 	uinput.report_0(player.device)

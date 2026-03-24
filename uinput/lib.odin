@@ -13,6 +13,12 @@ dbg :: proc(val: $T) -> T {
 	return val
 }
 
+ioctl :: proc(fd: linux.Fd, request: u32, arg: uintptr, location := #caller_location) {
+	if err := linux.Errno(-i64(linux.ioctl(fd, request, arg))); err != .NONE {
+		fmt.eprintln(location, err)
+	}
+}
+
 // from https://docs.kernel.org/input/uinput.html
 make_device :: proc(usetup: Setup, device_init: Device_Init) -> (dev: linux.Fd, err: linux.Errno) {
 	usetup := usetup
@@ -20,23 +26,23 @@ make_device :: proc(usetup: Setup, device_init: Device_Init) -> (dev: linux.Fd, 
 
 	init_inputs :: proc(dev: linux.Fd, event: EV, individual: UI_SET, list: []$T) {
 		if len(list) == 0 do return
-		linux.ioctl(dev, u32(UI_SET.EVBIT), uintptr(event))
+		ioctl(dev, u32(UI_SET.EVBIT), uintptr(event))
 		for input in list {
-			linux.ioctl(dev, u32(individual), uintptr(input))
+			ioctl(dev, u32(individual), uintptr(input))
 		}
 	}
 
 	init_inputs(dev, .KEY, .KEYBIT, device_init.keys)
 	init_inputs(dev, .REL, .RELBIT, device_init.rel)
 
-	linux.ioctl(dev, u32(UI_SET.EVBIT), uintptr(EV.ABS))
+	ioctl(dev, u32(UI_SET.EVBIT), uintptr(EV.ABS))
 	for &abs in device_init.abs {
-		linux.ioctl(dev, u32(UI_SET.ABSBIT), uintptr(abs.code))
-		linux.ioctl(dev, 0x401c5504, uintptr(&abs)) // UI_ABS_SETUP
+		ioctl(dev, u32(UI_SET.ABSBIT), uintptr(abs.code))
+		ioctl(dev, 0x401c5504, uintptr(&abs)) // UI_ABS_SETUP
 	}
 
-	linux.ioctl(dev, 0x405c5503, uintptr(&usetup)) // UI_DEV_SETUP
-	linux.ioctl(dev, 0x5501, 0) // UI_DEV_CREATE
+	ioctl(dev, 0x405c5503, uintptr(&usetup)) // UI_DEV_SETUP
+	ioctl(dev, 0x5501, 0) // UI_DEV_CREATE
 
 	req := linux.Time_Spec {
 		time_sec = 1,
@@ -46,7 +52,7 @@ make_device :: proc(usetup: Setup, device_init: Device_Init) -> (dev: linux.Fd, 
 }
 
 destroy_device :: proc(dev: linux.Fd) {
-	linux.ioctl(dev, 0x5502, 2) // UI_DEV_DESTROY
+	ioctl(dev, 0x5502, 2) // UI_DEV_DESTROY
 	linux.close(dev)
 }
 
@@ -56,7 +62,7 @@ emit_raw :: proc(dev: linux.Fd, #any_int type, code: u16, val: i32) {
 		dev,
 		mem.any_to_bytes(Input_Event{type = type, code = code, value = val}),
 	)
-	if errno != .NONE do dbg(errno)
+	if errno != .NONE do fmt.println(errno)
 }
 
 emit_key :: proc(dev: linux.Fd, key: KEY, pressed: b32) {

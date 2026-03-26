@@ -1,28 +1,30 @@
 package dumb_controller
 
+import "controller_lib"
 import "core:net"
-import "uinput"
 
 players: [16]Player
 
 player_count := 0
 
+NAME :: "dumb controller X"
+get_name :: proc() -> (name: [len(NAME) + 1]byte) {
+	copy(name[:], NAME)
+	name[len(NAME) - 1] = byte(player_count) + 'a'
+	name[len(NAME)] = 0
+	return
+}
+
 create_player :: proc(addr: ^net.Address) {
 	// FIXME: actually handle max players
 	if player_count == len(players) do player_count -= 1
 
-	setup := uinput.Setup {
-		input_id       = CONTROLLER_INPUT_ID,
-		ff_effects_max = 0,
-	}
-	copy(setup.name[:], CONTROLLER_NAME)
-	setup.name[len(CONTROLLER_NAME)] = byte(player_count) + 'a'
-	setup.name[len(CONTROLLER_NAME) + 1] = 0
-
+	name := get_name()
+	device := controller_lib.make(string(name[:])) or_else -1
 	players[player_count] = Player {
 		incremental = 0,
 		addr        = addr^,
-		device      = uinput.make_device(setup, CONTROLLER_INPUTS) or_else -1,
+		device      = device,
 	}
 
 	player_count += 1

@@ -47,7 +47,6 @@ make_device :: proc(usetup: Setup, device_init: Device_Init) -> (dev: linux.Fd, 
 	req := linux.Time_Spec {
 		time_sec = 1,
 	}
-	linux.nanosleep(&req, nil)
 	return
 }
 

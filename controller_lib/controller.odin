@@ -1,4 +1,4 @@
-package dumb_controller
+package controller
 
 import "uinput"
 
@@ -46,3 +46,7 @@ CONTROLLER_INPUT_ID :: uinput.Input_Id {
 	product = 0x2009,
 	version = 0x8111,
 }
+
+KEY :: uinput.KEY
+ABS :: uinput.ABS
+REL :: uinput.REL

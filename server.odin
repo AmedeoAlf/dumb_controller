@@ -1,11 +1,11 @@
 package dumb_controller
 
 import "base:intrinsics"
+import "controller_lib"
 import "core:fmt"
 import "core:hash"
 import "core:mem"
 import "core:net"
-import "uinput"
 
 hash_packet :: proc(packet: ^Input_Packet) -> u32be {
 	packet.hash = 0
@@ -17,58 +17,6 @@ hash_ok :: proc(packet: ^Input_Packet) -> bool {
 	return hash_packet(packet) != curr
 }
 
-_uinput_key_from_btn :: proc(btn: Button) -> uinput.KEY {
-	switch btn {
-	case .SOUTH:
-		return .BTN_SOUTH
-	case .WEST:
-		return .BTN_WEST
-	case .NORTH:
-		return .BTN_NORTH
-	case .EAST:
-		return .BTN_EAST
-	case .START:
-		return .BTN_START
-	case .SELECT:
-		return .BTN_SELECT
-	case .LB:
-		return .BTN_TL
-	case .RB:
-		return .BTN_TR
-	case .LT:
-		return .BTN_TL2
-	case .RT:
-		return .BTN_TR2
-	case .LS:
-		return .BTN_THUMBL
-	case .RS:
-		return .BTN_THUMBR
-	case:
-		return nil
-	}
-}
-
-filter_btns :: proc(state: ^Gamepad_State) {
-	nums := transmute(Buttons_Underlying)state.buttons
-	nums &= Buttons_Underlying((1 << len(Button)) - 1)
-	state.buttons = transmute(bit_set[Button;Buttons_Underlying])nums
-}
-
-buttons_to_le :: proc(buttons: bit_set[Button;u16be]) -> bit_set[Button;u16] {
-	return transmute(bit_set[Button;u16])u16(transmute(u16be)buttons)
-}
-
-handle_diff :: proc(player: ^Player, state: ^Gamepad_State) {
-	// Some weird ass bug makes it need to be treaded as little endian to work
-	changed := buttons_to_le(player.state.buttons ~ state.buttons)
-	for btn in changed {
-		key := _uinput_key_from_btn(btn)
-		fmt.println(key, "has changed", transmute(u64)key)
-		if key != nil do uinput.emit(player.device, key, btn in state.buttons)
-	}
-	uinput.report_0(player.device)
-}
-
 handle_input :: proc(packet: ^Input_Packet, endpoint: ^net.Endpoint) {
 	// TODO: maybe ask for a resend
 	if !hash_ok(packet) do return
@@ -77,9 +25,8 @@ handle_input :: proc(packet: ^Input_Packet, endpoint: ^net.Endpoint) {
 
 	if packet.incremental != 0 && packet.incremental < player.incremental do return
 
-	filter_btns(&packet.state)
-	handle_diff(player, &packet.state)
-	player.state = packet.state
+	controller_lib.filter_btns(&packet.state)
+	controller_lib.handle_diff(player.device, &player.state, &packet.state)
 	player.incremental = packet.incremental
 }
 

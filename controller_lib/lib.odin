@@ -15,7 +15,6 @@ make :: proc(name: string) -> (controller: linux.Fd, error: linux.Errno) {
 
 destroy :: proc(device: linux.Fd) {
 	uinput.destroy_device(device)
-	linux.close(device)
 }
 
 filter_btns :: proc(state: ^Gamepad_State) {

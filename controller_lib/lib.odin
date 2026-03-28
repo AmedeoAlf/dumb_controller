@@ -29,11 +29,23 @@ buttons_to_le :: proc(buttons: bit_set[Button;u16be]) -> bit_set[Button;u16] {
 
 handle_diff :: proc(controller: linux.Fd, prev: ^Gamepad_State, new: ^Gamepad_State) {
 	// Some weird ass bug makes it need to be treated as little endian to work
-	changed := buttons_to_le(prev.buttons ~ new.buttons)
-	for btn in changed {
+	changed_btns := buttons_to_le(prev.buttons ~ new.buttons)
+	for btn in changed_btns {
 		key := _uinput_key_from_btn(btn)
 		if key != nil do uinput.emit(controller, key, btn in new.buttons)
 	}
+
+	for val, axis in new.axes {
+		if (prev.axes[axis] != val) {
+			if code := _uinput_to_axis(axis); code != nil {
+				uinput.emit_abs(controller, code, i32(val))
+			}
+		}
+	}
+
+	if (prev.hat.x != new.hat.x) do uinput.emit_abs(controller, .HAT0X, new.hat.x)
+	if (prev.hat.y != new.hat.y) do uinput.emit_abs(controller, .HAT0Y, new.hat.y)
+
 	uinput.report_0(controller)
 	prev^ = new^
 }
@@ -63,6 +75,21 @@ _uinput_key_from_btn :: proc(btn: Button) -> KEY {
 		return .BTN_THUMBL
 	case .RS:
 		return .BTN_THUMBR
+	case:
+		return nil
+	}
+}
+
+_uinput_to_axis :: proc(axis: Axis) -> ABS {
+	switch axis {
+	case .X:
+		return .X
+	case .Y:
+		return .Y
+	case .RX:
+		return .RX
+	case .RY:
+		return .RY
 	case:
 		return nil
 	}

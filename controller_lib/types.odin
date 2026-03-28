@@ -20,16 +20,9 @@ Axis :: enum {
 	RY,
 }
 
-Hat :: enum u8 {
-	MID,
-	MIDL,
-	MIDR,
-	TOP,
-	TOPL,
-	TOPR,
-	BOT,
-	BOTL,
-	BOTR,
+Hat :: bit_field u8 {
+	x: i32 | 2,
+	y: i32 | 2,
 }
 
 Buttons_Underlying :: u16be

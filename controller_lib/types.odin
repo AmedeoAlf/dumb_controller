@@ -9,8 +9,6 @@ Button :: enum {
 	SELECT,
 	LB,
 	RB,
-	LT,
-	RT,
 	LS,
 	RS,
 }

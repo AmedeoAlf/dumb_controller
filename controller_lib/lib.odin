@@ -39,7 +39,7 @@ handle_diff :: proc(controller: linux.Fd, prev: ^Gamepad_State, new: ^Gamepad_St
 }
 
 _uinput_key_from_btn :: proc(btn: Button) -> KEY {
-	#partial switch btn {
+	switch btn {
 	case .SOUTH:
 		return .BTN_SOUTH
 	// XBOX One S controller reports

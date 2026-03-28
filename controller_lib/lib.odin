@@ -28,7 +28,7 @@ buttons_to_le :: proc(buttons: bit_set[Button;u16be]) -> bit_set[Button;u16] {
 }
 
 handle_diff :: proc(controller: linux.Fd, prev: ^Gamepad_State, new: ^Gamepad_State) {
-	// Some weird ass bug makes it need to be treaded as little endian to work
+	// Some weird ass bug makes it need to be treated as little endian to work
 	changed := buttons_to_le(prev.buttons ~ new.buttons)
 	for btn in changed {
 		key := _uinput_key_from_btn(btn)

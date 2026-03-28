@@ -39,13 +39,16 @@ handle_diff :: proc(controller: linux.Fd, prev: ^Gamepad_State, new: ^Gamepad_St
 }
 
 _uinput_key_from_btn :: proc(btn: Button) -> KEY {
-	switch btn {
+	#partial switch btn {
 	case .SOUTH:
 		return .BTN_SOUTH
+	// XBOX One S controller reports
+	// - 'X' (west) as north
+	// - 'Y' (north) as west
 	case .WEST:
-		return .BTN_WEST
-	case .NORTH:
 		return .BTN_NORTH
+	case .NORTH:
+		return .BTN_WEST
 	case .EAST:
 		return .BTN_EAST
 	case .START:
@@ -56,10 +59,6 @@ _uinput_key_from_btn :: proc(btn: Button) -> KEY {
 		return .BTN_TL
 	case .RB:
 		return .BTN_TR
-	case .LT:
-		return .BTN_TL2
-	case .RT:
-		return .BTN_TR2
 	case .LS:
 		return .BTN_THUMBL
 	case .RS:

@@ -36,15 +36,21 @@ handle_diff :: proc(controller: linux.Fd, prev: ^Gamepad_State, new: ^Gamepad_St
 	}
 
 	for val, axis in new.axes {
-		if (prev.axes[axis] != val) {
-			if code := _uinput_to_axis(axis); code != nil {
-				uinput.emit_abs(controller, code, i32(val))
-			}
+		(prev.axes[axis] != val) or_continue
+		if code := _uinput_to_axis(axis); code != nil {
+			uinput.emit_abs(controller, code, i32(val))
 		}
 	}
 
 	if (prev.hat.x != new.hat.x) do uinput.emit_abs(controller, .HAT0X, new.hat.x)
 	if (prev.hat.y != new.hat.y) do uinput.emit_abs(controller, .HAT0Y, new.hat.y)
+
+	for val, trigger in new.triggers {
+		(prev.triggers[trigger] != val) or_continue
+		if code := _uintput_axis_from_trigger(trigger); code != nil {
+			uinput.emit_abs(controller, code, i32(val))
+		}
+	}
 
 	uinput.report_0(controller)
 	prev^ = new^
@@ -90,6 +96,17 @@ _uinput_to_axis :: proc(axis: Axis) -> ABS {
 		return .RX
 	case .RY:
 		return .RY
+	case:
+		return nil
+	}
+}
+
+_uintput_axis_from_trigger :: proc(trigger: Trigger) -> ABS {
+	switch trigger {
+	case .LT:
+		return .Z
+	case .RT:
+		return .RZ
 	case:
 		return nil
 	}

@@ -20,6 +20,11 @@ Axis :: enum {
 	RY,
 }
 
+Trigger :: enum {
+	LT,
+	RT,
+}
+
 Hat :: bit_field u8 {
 	x: i32 | 2,
 	y: i32 | 2,
@@ -27,7 +32,8 @@ Hat :: bit_field u8 {
 
 Buttons_Underlying :: u16be
 Gamepad_State :: struct #packed {
-	buttons: bit_set[Button;Buttons_Underlying],
-	axes:    [Axis]i16,
-	hat:     Hat,
+	buttons:  bit_set[Button;Buttons_Underlying],
+	axes:     [Axis]i16be,
+	triggers: [Trigger]u8,
+	hat:      Hat,
 }

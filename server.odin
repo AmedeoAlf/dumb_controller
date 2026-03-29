@@ -31,7 +31,10 @@ handle_input :: proc(packet: ^Input_Packet, endpoint: ^net.Endpoint) {
 }
 
 main :: proc() {
-	sock, sock_err := net.make_bound_udp_socket(net.IP4_Address{0, 0, 0, 0}, 8081)
+	sock, sock_err := net.make_bound_udp_socket(
+		net.IP4_Address{0, 0, 0, 0},
+		8081,
+	)
 	if sock_err != nil do die(sock_err)
 
 	buffer: [1024]byte
@@ -42,12 +45,25 @@ main :: proc() {
 		fmt.println("got packet", Packet_Type(buffer[0]), read)
 		switch Packet_Type(buffer[0]) {
 		case .INPUT:
-			if read != 1 + size_of(Input_Packet) do continue
+			if read != 1 + size_of(Input_Packet) {
+				fmt.eprintln(
+					"Got a",
+					read,
+					"byte sized packet (not",
+					size_of(Input_Packet) + 1,
+					")",
+				)
+				continue
+			}
 			data := transmute(^Input_Packet)raw_data(buffer[1:])
 			handle_input(data, &endpoint)
 		case .PLAYER_NUM:
 			player := obtain_player(&endpoint.address)
-			answer := []byte{u8(Packet_Type.PLAYER_NUM), u8(player >> 8), u8(player)}
+			answer := []byte {
+				u8(Packet_Type.PLAYER_NUM),
+				u8(player >> 8),
+				u8(player),
+			}
 			net.send_udp(sock, answer, endpoint)
 		}
 		for p in players[:player_count] do fmt.println(p)

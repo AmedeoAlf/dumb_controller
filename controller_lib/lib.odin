@@ -27,17 +27,22 @@ buttons_to_le :: proc(buttons: bit_set[Button;u16be]) -> bit_set[Button;u16] {
 	return transmute(bit_set[Button;u16])u16(transmute(u16be)buttons)
 }
 
-handle_diff :: proc(controller: linux.Fd, prev: ^Gamepad_State, new: ^Gamepad_State) {
+handle_diff :: proc(
+	controller: linux.Fd,
+	prev: ^Gamepad_State,
+	new: ^Gamepad_State,
+) {
 	// Some weird ass bug makes it need to be treated as little endian to work
 	changed_btns := buttons_to_le(prev.buttons ~ new.buttons)
 	for btn in changed_btns {
-		key := _uinput_key_from_btn(btn)
-		if key != nil do uinput.emit(controller, key, btn in new.buttons)
+		if code := _uinput_key_from_btn(btn); code != .RESERVED {
+			uinput.emit(controller, code, btn in new.buttons)
+		}
 	}
 
 	for val, axis in new.axes {
 		(prev.axes[axis] != val) or_continue
-		if code := _uinput_to_axis(axis); code != nil {
+		if code := _uinput_to_axis(axis); code != .RESERVED {
 			uinput.emit_abs(controller, code, i32(val))
 		}
 	}
@@ -47,7 +52,7 @@ handle_diff :: proc(controller: linux.Fd, prev: ^Gamepad_State, new: ^Gamepad_St
 
 	for val, trigger in new.triggers {
 		(prev.triggers[trigger] != val) or_continue
-		if code := _uintput_axis_from_trigger(trigger); code != nil {
+		if code := _uintput_axis_from_trigger(trigger); code != .RESERVED {
 			uinput.emit_abs(controller, code, i32(val))
 		}
 	}
@@ -82,7 +87,7 @@ _uinput_key_from_btn :: proc(btn: Button) -> KEY {
 	case .RS:
 		return .BTN_THUMBR
 	case:
-		return nil
+		return .RESERVED
 	}
 }
 
@@ -97,7 +102,7 @@ _uinput_to_axis :: proc(axis: Axis) -> ABS {
 	case .RY:
 		return .RY
 	case:
-		return nil
+		return .RESERVED
 	}
 }
 
@@ -108,6 +113,6 @@ _uintput_axis_from_trigger :: proc(trigger: Trigger) -> ABS {
 	case .RT:
 		return .RZ
 	case:
-		return nil
+		return .RESERVED
 	}
 }

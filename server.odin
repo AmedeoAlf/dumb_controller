@@ -37,6 +37,8 @@ main :: proc() {
 	)
 	if sock_err != nil do die(sock_err)
 
+	print_ips()
+
 	buffer: [1024]byte
 	for {
 		fmt.print("\nReady ")
@@ -65,6 +67,11 @@ main :: proc() {
 				u8(player),
 			}
 			net.send_udp(sock, answer, endpoint)
+		case .BROADCAST:
+			#assert(u8(Packet_Type.BROADCAST) == 2)
+			MAGIC :: string("\002dumb_controller")
+			if mem.compare(buffer[:read], transmute([]u8)MAGIC) != 0 do continue
+			net.send_udp(sock, buffer[:read], endpoint)
 		}
 		for p in players[:player_count] do fmt.println(p)
 	}

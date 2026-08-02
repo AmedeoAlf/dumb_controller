@@ -7,6 +7,7 @@ import "core:sys/linux"
 Packet_Type :: enum u8 {
 	INPUT,
 	PLAYER_NUM,
+	BROADCAST,
 }
 
 Input_Packet :: struct #packed {

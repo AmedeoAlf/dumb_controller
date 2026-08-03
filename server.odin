@@ -6,6 +6,7 @@ import "core:fmt"
 import "core:hash"
 import "core:mem"
 import "core:net"
+import "mouse_lib"
 
 hash_packet :: proc(packet: ^Input_Packet) -> u32be {
 	packet.hash = 0
@@ -24,6 +25,12 @@ handle_input :: proc(packet: ^Input_Packet, endpoint: ^net.Endpoint) {
 	player := &players[obtain_player(&endpoint.address)]
 
 	if packet.incremental != 0 && packet.incremental < player.incremental do return
+
+	mouse_lib.move_mouse(
+		player.mouse,
+		i32(packet.state.mouse_offset.x),
+		i32(packet.state.mouse_offset.y),
+	)
 
 	controller_lib.filter_btns(&packet.state)
 	controller_lib.handle_diff(player.device, &player.state, &packet.state)

@@ -21,4 +21,6 @@ Player :: struct {
 	incremental: u32be,
 	addr:        net.Address,
 	device:      linux.Fd,
+	// shared between all
+	mouse:       linux.Fd,
 }

@@ -32,8 +32,9 @@ Hat :: bit_field u8 {
 
 Buttons_Underlying :: u16be
 Gamepad_State :: struct #packed {
-	buttons:  bit_set[Button;Buttons_Underlying],
-	axes:     [Axis]i16be,
-	triggers: [Trigger]u8,
-	hat:      Hat,
+	buttons:      bit_set[Button;Buttons_Underlying],
+	axes:         [Axis]i16be,
+	triggers:     [Trigger]u8,
+	hat:          Hat,
+	mouse_offset: [2]i16be,
 }

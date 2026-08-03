@@ -2,6 +2,8 @@ package dumb_controller
 
 import "controller_lib"
 import "core:net"
+import "core:sys/linux"
+import "mouse_lib"
 
 players: [16]Player
 
@@ -25,6 +27,17 @@ create_player :: proc(addr: ^net.Address) {
 		incremental = 0,
 		addr        = addr^,
 		device      = device,
+	}
+
+	if player_count < 1 {
+		mouse, err := mouse_lib.make_mouse()
+		assert(
+			err == .NONE,
+			"Could not create a mouse for controller, maybe I should not crash ;-)",
+		)
+		players[player_count].mouse = mouse
+	} else {
+		players[player_count].mouse = players[player_count - 1].mouse
 	}
 
 	player_count += 1

@@ -53,16 +53,16 @@ main :: proc() {
 	)
 	if sock_err != nil do die(sock_err)
 
-	dump_struct_size(Input_Packet)
+	// dump_struct_size(Input_Packet)
 
 	print_ips()
 
 	buffer: [1024]byte
 	for {
-		fmt.print("\nReady ")
+		fmt.print("\nReady... ")
 		read, endpoint, err := net.recv_udp(sock, buffer[:])
 		if read < 1 do continue
-		fmt.println("got packet", Packet_Type(buffer[0]), read)
+		fmt.println("got packet", Packet_Type(buffer[0]))
 		switch Packet_Type(buffer[0]) {
 		case .INPUT:
 			if read != 1 + size_of(Input_Packet) {

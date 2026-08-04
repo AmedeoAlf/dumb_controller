@@ -26,14 +26,23 @@ handle_input :: proc(packet: ^Input_Packet, endpoint: ^net.Endpoint) {
 
 	if packet.incremental != 0 && packet.incremental < player.incremental do return
 
-	mouse_lib.move_mouse(
-		player.mouse,
-		i32(packet.state.mouse_offset.x),
-		i32(packet.state.mouse_offset.y),
-	)
+	if packet.mouse.offset.x != 0 || packet.mouse.offset.y != 0 {
+		mouse_lib.move_mouse(
+			player.mouse_dev,
+			i32(packet.mouse.offset.x),
+			i32(packet.mouse.offset.y),
+		)
+	}
 
-	controller_lib.filter_btns(&packet.state)
-	controller_lib.handle_diff(player.device, &player.state, &packet.state)
+	{
+		diff := packet.mouse.btns ~ player.mouse_btns
+		for btn in diff {
+			mouse_lib.emit_btn(player.mouse_dev, btn, btn in packet.mouse.btns)
+		}
+	}
+
+	controller_lib.filter_btns(&packet.gamepad)
+	controller_lib.handle_diff(player.device, &player.gamepad, &packet.gamepad)
 	player.incremental = packet.incremental
 }
 
@@ -43,6 +52,8 @@ main :: proc() {
 		8081,
 	)
 	if sock_err != nil do die(sock_err)
+
+	dump_struct_size(Input_Packet)
 
 	print_ips()
 
@@ -55,13 +66,12 @@ main :: proc() {
 		switch Packet_Type(buffer[0]) {
 		case .INPUT:
 			if read != 1 + size_of(Input_Packet) {
-				fmt.eprintln(
-					"Got a",
+				fmt.eprintfln(
+					"Got a %d byte packet (not %d)",
 					read,
-					"byte sized packet (not",
 					size_of(Input_Packet) + 1,
-					")",
 				)
+				fmt.eprintln(transmute(^Input_Packet)raw_data(buffer[1:]))
 				continue
 			}
 			data := transmute(^Input_Packet)raw_data(buffer[1:])

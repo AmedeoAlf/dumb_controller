@@ -3,6 +3,7 @@ package dumb_controller
 import "core:fmt"
 import "core:net"
 import "core:os"
+import "core:reflect"
 
 die :: proc(msg: any, code := -1, loc := #caller_location) {
 	fmt.eprintln("FATAL:", loc, msg)
@@ -41,4 +42,24 @@ print_ips :: proc() {
 		fmt.printfln("{} -> {}", addr, curr.ifa_name)
 	}
 	free_all(context.temp_allocator)
+}
+
+dump_struct_size :: proc(T: typeid, ind := 0) -> bool {
+	named := type_info_of(T).variant.(reflect.Type_Info_Named) or_return
+	stru := named.base.variant.(reflect.Type_Info_Struct) or_return
+
+	for i in 0 ..< stru.field_count {
+		for i in 0 ..< ind do fmt.print("  ")
+		fmt.printfln(
+			"%s %dB",
+			stru.names[i],
+			(stru.offsets[i + 1] if i + 1 < stru.field_count else uintptr(named.base.size)) -
+			stru.offsets[i],
+		)
+
+		dump_struct_size(stru.types[i].id, ind + 1)
+
+
+	}
+	return true
 }

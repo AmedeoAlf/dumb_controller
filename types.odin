@@ -3,6 +3,7 @@ package dumb_controller
 import "controller_lib"
 import "core:net"
 import "core:sys/linux"
+import "mouse_lib"
 
 Packet_Type :: enum u8 {
 	INPUT,
@@ -13,14 +14,16 @@ Packet_Type :: enum u8 {
 Input_Packet :: struct #packed {
 	incremental: u32be,
 	hash:        u32be,
-	state:       controller_lib.Gamepad_State,
+	gamepad:     controller_lib.Gamepad_State,
+	mouse:       mouse_lib.MousePacket,
 }
 
 Player :: struct {
-	using state: controller_lib.Gamepad_State,
-	incremental: u32be,
-	addr:        net.Address,
-	device:      linux.Fd,
+	using gamepad: controller_lib.Gamepad_State,
+	mouse_btns:    bit_set[mouse_lib.MouseBtn;u8],
+	incremental:   u32be,
+	addr:          net.Address,
+	device:        linux.Fd,
 	// shared between all
-	mouse:       linux.Fd,
+	mouse_dev:     linux.Fd,
 }

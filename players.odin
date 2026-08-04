@@ -35,9 +35,9 @@ create_player :: proc(addr: ^net.Address) {
 			err == .NONE,
 			"Could not create a mouse for controller, maybe I should not crash ;-)",
 		)
-		players[player_count].mouse = mouse
+		players[player_count].mouse_dev = mouse
 	} else {
-		players[player_count].mouse = players[player_count - 1].mouse
+		players[player_count].mouse_dev = players[player_count - 1].mouse_dev
 	}
 
 	player_count += 1

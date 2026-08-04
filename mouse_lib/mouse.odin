@@ -55,4 +55,5 @@ emit_btn :: proc(mouse: linux.Fd, btn: MouseBtn, pressed: b32) {
 		panic("invalid button emitted on mouse")
 	}
 	uinput.emit_key(mouse, uinput_code, pressed)
+	uinput.report_0(mouse)
 }

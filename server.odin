@@ -39,6 +39,7 @@ handle_input :: proc(packet: ^Input_Packet, endpoint: ^net.Endpoint) {
 		for btn in diff {
 			mouse_lib.emit_btn(player.mouse_dev, btn, btn in packet.mouse.btns)
 		}
+		player.mouse_btns = packet.mouse.btns
 	}
 
 	controller_lib.filter_btns(&packet.gamepad)
